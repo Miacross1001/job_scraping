@@ -18,6 +18,21 @@ class Parser:
             city = obj.find('p', {'data-qa': 'vacancy-view-location'})
         return city.text
 
+    def _check(self, link):
+        stack = []
+        response = requests.get(link, headers=headers)
+        obj = BeautifulSoup(response.text, features='lxml')
+        list_stack = obj.findAll('div', {'class': 'bloko-tag bloko-tag_inline', 'data-qa': 'bloko-tag bloko-tag_inline skills-element'})
+
+        for var in list_stack:
+            elem = var.find('span', {'class': 'bloko-tag__section bloko-tag__section_text', 'data-qa': 'bloko-tag__text'})
+            stack.append(elem.text)
+
+        if 'Django' and 'Flask' in stack:
+            return True
+        else:
+            return False
+
     def _get_salary(self, link):
         response = requests.get(link, headers=headers)
         obj = BeautifulSoup(response.text, features='lxml')
@@ -39,14 +54,16 @@ class Parser:
         count = 0
         for link in linkVacancy:
             sleep(0.5)
-            count += 1
-            url: str = link.attrs['href']
-            city: str = self._get_city(url)
-            salary: str = self._get_salary(url)
-            name: str = self._get_name(url)
-            result.append(
-                {'№': count, 'info': {'link': url, 'name': name, 'city': city, 'salary': salary}}
-            )
+            req = link.attrs['href']
+            if self._check(req) == True:
+                count += 1
+                url: str = req
+                city: str = self._get_city(url)
+                salary: str = self._get_salary(url)
+                name: str = self._get_name(url)
+                result.append(
+                    {'№': count, 'info': {'link': url, 'name': name, 'city': city, 'salary': salary}}
+                )
         return result
 
     def print_vacancy(self):
